@@ -1,0 +1,74 @@
+services:
+  api:
+    build: .
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./:/usr/src/app
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - database_hostname=postgres
+      - database_port=5432
+      - database_password=${database_password}
+      - database_name=${database_name}
+      - database_username=${database_username}
+      - secret_key=${secret_key}
+      - algorithm=HS256
+      - redis_url=redis://redis:6379/0
+      - football_api_key=${football_api_key}
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_PASSWORD=${database_password}
+      - POSTGRES_DB=${database_name}
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery_worker:
+    build: .
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./:/usr/src/app
+    command: celery -A app.worker worker --loglevel=info
+    environment:
+      - database_hostname=postgres
+      - database_port=5432
+      - database_password=${database_password}
+      - database_name=${database_name}
+      - database_username=${database_username}
+      - secret_key=${secret_key}
+      - redis_url=redis://redis:6379/0
+      - football_api_key=${football_api_key}
+
+  celery_beat:
+    build: .
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./:/usr/src/app
+    command: celery -A app.worker beat --loglevel=info
+    environment:
+      - database_hostname=postgres
+      - database_port=5432
+      - database_password=${database_password}
+      - database_name=${database_name}
+      - database_username=${database_username}
+      - redis_url=redis://redis:6379/0
+      - football_api_key=${football_api_key}
+
+volumes:
+  postgres-db:
