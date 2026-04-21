@@ -7,7 +7,7 @@ HEADERS = {"X-Auth-Token": settings.football_api_key}
 
 def get_premier_league_teams() -> dict:
     response = httpx.get(
-        f"{BASE_URL}/competitions/PL/teams",
+        f"{BASE_URL}/competitions/PL/teams", 
         headers=HEADERS,
         timeout=10.0
     )

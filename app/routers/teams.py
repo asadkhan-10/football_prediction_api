@@ -5,8 +5,7 @@ from .. import models, schemas
 from .. database import get_db
 from ..external.football_client import get_premier_league_teams
 from app.services.form import get_team_form
-
-
+from app.tasks import sync_teams_task
 router = APIRouter(prefix="/teams", tags=["Teams"])
 
 
@@ -18,31 +17,8 @@ def get_teams(db: Session = Depends(get_db)):
 
 @router.post("/sync", status_code=202)
 def sync_teams(db: Session = Depends(get_db)):
-    data = get_premier_league_teams()
-    teams = data.get("teams", [])
-
-    for team_data in teams:
-        existing = db.query(models.Team).filter(
-            models.Team.external_id == team_data["id"]
-        ).first()
-
-        if existing:
-            existing.name = team_data["name"]
-            existing.short_name = team_data.get("shortName")
-            existing.tla = team_data.get("tla")
-            existing.crest_url = team_data.get("crest")
-        else:
-            new_team = models.Team(
-                external_id=team_data["id"],
-                name=team_data["name"],
-                short_name=team_data.get("shortName"),
-                tla=team_data.get("tla"),
-                crest_url=team_data.get("crest")
-            )
-            db.add(new_team)
-
-    db.commit()
-    return {"message": f"Synced {len(teams)} teams"}
+      task = sync_teams_task.delay()
+      return {"message": "Team sync started", "task_id": task.id}
 
 
 

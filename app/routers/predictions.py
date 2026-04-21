@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
 from app.services.prediction import predict_match
-
+from celery.result import AsyncResult
+from app.celery_app import celery_app
 router = APIRouter(prefix="/predictions", tags=["Predictions"])
 
 
@@ -81,3 +82,12 @@ def get_all_predictions(db: Session = Depends(get_db)):
         results.append(build_response(prediction, fixture, db))
 
     return results
+
+@router.get("/task/{task_id}")
+def get_task_status(task_id: str):
+    result = AsyncResult(task_id, app=celery_app)
+    return {
+        "task_id": task_id,
+        "status": result.status,
+        "result": result.result if result.ready() else None,
+    }
