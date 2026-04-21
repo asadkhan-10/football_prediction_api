@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, ForeignKey, Float
 from sqlalchemy.sql.expression import text
 from .database import Base
 
@@ -31,14 +31,13 @@ class Fixture(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
 
 
+
 class Prediction(Base):
     __tablename__ = "predictions"
-
     id = Column(Integer, primary_key=True, nullable=False)
     fixture_id = Column(Integer, ForeignKey("fixtures.id", ondelete="CASCADE"), nullable=False)
-    predicted_winner = Column(String)
-    home_win_prob = Column(Integer)
-    away_win_prob = Column(Integer)
-    draw_prob = Column(Integer)
-    reasoning = Column(String)
+    predicted_winner = Column(String, nullable=False)
+    home_win_prob = Column(Float, nullable=False)
+    away_win_prob = Column(Float, nullable=False)
+    draw_prob = Column(Float, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))

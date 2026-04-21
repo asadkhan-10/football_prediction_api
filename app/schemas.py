@@ -31,3 +31,19 @@ class FixtureOut(BaseModel):
 
     class Config:
         from_attributes = True
+        
+        
+
+class PredictionOut(BaseModel):
+    id: int
+    fixture_id: int
+    home_team: str
+    away_team: str
+    predicted_winner: str
+    home_win_prob: float
+    away_win_prob: float
+    draw_prob: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

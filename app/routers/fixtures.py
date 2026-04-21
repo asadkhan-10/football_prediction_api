@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
+from app.routers import teams
 from .. import models, schemas
 from ..database import get_db
 from ..external.football_client import get_premier_league_fixtures
+from app.services.cache import delete_cached
 
 router = APIRouter(prefix="/fixtures", tags=["Fixtures"])
 
@@ -57,4 +60,7 @@ def sync_fixtures(db: Session = Depends(get_db)):
             db.add(new_fixture)
 
     db.commit()
+    teams = db.query(models.Team).all()
+    for team in teams:
+        delete_cached(f"team_form:{team.id}:5")
     return {"message": f"Synced {len(matches)} fixtures"}

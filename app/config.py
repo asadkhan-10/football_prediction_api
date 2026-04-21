@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     database_name: str
     secret_key: str
     algorithm: str = "HS256"
-    redis_url: str
+    redis_url: str = "redis://localhost:6379/0"
     football_api_key: str
 
     class Config:
