@@ -41,6 +41,10 @@ def predict_match(home_team_id: int, away_team_id: int, db: Session) -> dict:
         "draw": draw_probability,
         "away_win": away_win_probability,
     }
+    # Clamp to prevent negative probabilities from rounding
+    home_win_probability = max(0.0, home_win_probability)
+    away_win_probability = max(0.0, away_win_probability)
+    draw_probability = max(0.0, draw_probability)
     predicted_outcome = max(probabilities, key=probabilities.get)  # type: ignore
 
     return {

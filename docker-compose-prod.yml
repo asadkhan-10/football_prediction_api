@@ -1,0 +1,73 @@
+services:
+  api:
+    image: asadkhn10/football-prediction-api
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "80:8000"
+    environment:
+      - database_hostname=postgres
+      - database_port=5432
+      - database_password=${database_password}
+      - database_name=${database_name}
+      - database_username=${database_username}
+      - secret_key=${secret_key}
+      - algorithm=HS256
+      - access_token_expire_minutes=30
+      - football_api_key=${football_api_key}
+      - redis_url=redis://redis:6379/0
+
+  celery_worker:
+    image: asadkhn10/football-prediction-api
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A app.celery_app.celery_app worker --loglevel=info
+    environment:
+      - database_hostname=postgres
+      - database_port=5432
+      - database_password=${database_password}
+      - database_name=${database_name}
+      - database_username=${database_username}
+      - secret_key=${secret_key}
+      - algorithm=HS256
+      - access_token_expire_minutes=30
+      - football_api_key=${football_api_key}
+      - redis_url=redis://redis:6379/0
+  celery_beat:
+    image: asadkhn10/football-prediction-api
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A app.celery_app.celery_app beat --loglevel=info
+    environment:
+      - database_hostname=postgres
+      - database_port=5432
+      - database_password=${database_password}
+      - database_name=${database_name}
+      - database_username=${database_username}
+      - secret_key=${secret_key}
+      - redis_url=redis://redis:6379/0
+      - football_api_key=${football_api_key}
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=${database_username}
+      - POSTGRES_PASSWORD=${database_password}
+      - POSTGRES_DB=${database_name}
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${database_username} -d ${database_name}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7
+
+volumes:
+  postgres-db:

@@ -42,7 +42,7 @@ services:
       - redis
     volumes:
       - ./:/usr/src/app
-    command: celery -A app.worker worker --loglevel=info
+    command: celery -A app.celery_app.celery_app worker --loglevel=info
     environment:
       - database_hostname=postgres
       - database_port=5432
@@ -60,13 +60,14 @@ services:
       - redis
     volumes:
       - ./:/usr/src/app
-    command: celery -A app.worker beat --loglevel=info
+    command: celery -A app.celery_app.celery_app beat --loglevel=info
     environment:
       - database_hostname=postgres
       - database_port=5432
       - database_password=${database_password}
       - database_name=${database_name}
       - database_username=${database_username}
+      - secret_key=${secret_key}
       - redis_url=redis://redis:6379/0
       - football_api_key=${football_api_key}
 

@@ -1,5 +1,5 @@
-from alembic.util import status
-from fastapi import APIRouter, Depends, HTTPException
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from .. database import get_db
@@ -20,7 +20,15 @@ def sync_teams(db: Session = Depends(get_db)):
       task = sync_teams_task.delay()
       return {"message": "Team sync started", "task_id": task.id}
 
-
+@router.get("/{id}", response_model=schemas.TeamOut)
+def get_team(id: int, db: Session = Depends(get_db)):
+    team = db.query(models.Team).filter(models.Team.id == id).first()
+    if not team:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Team with id {id} not found"
+        )
+    return team
 
 @router.get("/{id}/form")
 def get_form(
