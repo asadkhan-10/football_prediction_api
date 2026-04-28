@@ -97,3 +97,22 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/football-prediction-api:latest
+  deploy:
+      runs-on: ubuntu-latest
+      needs: docker
+      if: github.ref == 'refs/heads/main'
+      environment:
+        name: production        # <-- production, not testing
+
+      steps:
+        - name: Deploy to EC2
+          uses: appleboy/ssh-action@v1.0.3
+          with:
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USERNAME }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+            script: |
+              cd ~/app
+              docker compose -f docker-compose-prod.yml pull
+              docker compose -f docker-compose-prod.yml up -d
+              docker image prune -f

@@ -20,14 +20,14 @@ def sync_teams_task():
                 existing.name = team_data["name"]
                 existing.short_name = team_data["shortName"]
                 existing.tla = team_data["tla"]
-                existing.crest = team_data["crest"]
+                existing.crest_url = team_data["crest"]
             else:
                 new_team = models.Team(
                     external_id=team_data["id"],
                     name=team_data["name"],
                     short_name=team_data["shortName"],
                     tla=team_data["tla"],
-                    crest=team_data["crest"],
+                    crest_url=team_data["crest"],
                 )
                 db.add(new_team)
         db.commit()
