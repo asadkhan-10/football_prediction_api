@@ -2,7 +2,7 @@
 
 A REST API that predicts Premier League match outcomes based on recent team form. Built with FastAPI, PostgreSQL, Redis, and Celery.
 
-LIVE at: http://13.60.196.153/docs
+LIVE at: https://football-api.duckdns.org/docs
 
 ## Tech Stack
 
