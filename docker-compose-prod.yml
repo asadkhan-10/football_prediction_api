@@ -4,8 +4,7 @@ services:
     depends_on:
       - postgres
       - redis
-    ports:
-      - "80:8000"
+
     environment:
       - database_hostname=postgres
       - database_port=5432
@@ -17,6 +16,24 @@ services:
       - redis_url=redis://redis:6379/0
       - football_api_key=${football_api_key}
     restart: unless-stopped
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 
   postgres:
     image: postgres:15
