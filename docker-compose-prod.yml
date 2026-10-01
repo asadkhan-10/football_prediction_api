@@ -2,7 +2,7 @@ services:
   api:
     image: asadkhn10/football-prediction-api:latest
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -10,7 +10,6 @@ services:
     depends_on:
       - postgres
       - redis
-
     environment:
       - database_hostname=postgres
       - database_port=5432
@@ -22,6 +21,7 @@ services:
       - redis_url=redis://redis:6379/0
       - football_api_key=${football_api_key}
     restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     ports:
@@ -38,6 +38,7 @@ services:
 
   certbot:
     image: certbot/certbot
+    profiles: ["tools"]
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
