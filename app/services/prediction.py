@@ -1,50 +1,52 @@
 # app/services/prediction.py
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 from app.services.form import get_team_form
 
+import math
+
+HOME_ADVANTAGE = 0.3   # in points-per-match units
+GD_WEIGHT = 0.5        # how much goal difference counts vs points
+BASE_DRAW = 0.30       # draw probability for two equal teams
+DRAW_DECAY = 0.10      # draw shrinks as teams get further apart
+MIN_DRAW = 0.15
 
 
+def team_strength(form: dict) -> float | None:
+    """Per-match strength, so a team with 3 games isn't compared unfairly to one with 5."""
+    n = form["matches_analyzed"]
+    if n == 0:
+        return None
+    return form["points"] / n + GD_WEIGHT * (form["goal_difference"] / n)
 
-def predict_match(home_team_id: int, away_team_id: int, db: Session) -> dict:
-    """
-    Predict match outcome based on recent form of both teams.
-    """
 
-    home_form = get_team_form(team_id=home_team_id, db=db)
-    away_form = get_team_form(team_id=away_team_id, db=db)
+def calculate_probabilities(home_strength: float, away_strength: float) -> dict:
+    diff = home_strength - away_strength + HOME_ADVANTAGE
+    draw = max(MIN_DRAW, BASE_DRAW - DRAW_DECAY * abs(diff))
+    home_share = 1 / (1 + math.exp(-diff))   # always between 0 and 1, even for negative diff
+    home = round((1 - draw) * home_share, 2)
+    away = round((1 - draw) * (1 - home_share), 2)
+    return {"home_win": home, "draw": round(1 - home - away, 2), "away_win": away}
 
-    # Score each team — home team gets a +3 point bonus (home advantage)
-    HOME_ADVANTAGE = 3
-    home_score = home_form["points"] + home_form["goal_difference"] + HOME_ADVANTAGE
-    away_score = away_form["points"] + away_form["goal_difference"]
 
-    total = home_score + away_score
+NEUTRAL_PROBABILITIES = {"home_win": 0.40, "draw": 0.30, "away_win": 0.30}
 
-    if total == 0:
-        home_win_probability = 0.34
-        draw_probability = 0.32
-        away_win_probability = 0.34
+
+def predict_match(home_team_id: int, away_team_id: int, db: Session,
+                  as_of: datetime | None = None) -> dict:
+    home_form = get_team_form(team_id=home_team_id, db=db, as_of=as_of)
+    away_form = get_team_form(team_id=away_team_id, db=db, as_of=as_of)
+
+    home_strength = team_strength(home_form)
+    away_strength = team_strength(away_form)
+
+    if home_strength is None or away_strength is None:
+        # No finished matches for one team: don't invent confidence
+        probabilities = NEUTRAL_PROBABILITIES
     else:
-        # Calculate raw shares
-        home_raw = home_score / total        # e.g. 0.737
-        away_raw = away_score / total        # e.g. 0.263
+        probabilities = calculate_probabilities(home_strength, away_strength)
 
-        # Scale both down by 75% to leave room for draw
-        home_win_probability = round(home_raw * 0.75, 2)
-        away_win_probability = round(away_raw * 0.75, 2)
-
-        # Draw gets whatever is left — guaranteed non-negative because home + away <= 0.75
-        draw_probability = round(1 - home_win_probability - away_win_probability, 2)
-    # Determine predicted outcome
-    probabilities = {
-        "home_win": home_win_probability,
-        "draw": draw_probability,
-        "away_win": away_win_probability,
-    }
-    # Clamp to prevent negative probabilities from rounding
-    home_win_probability = max(0.0, home_win_probability)
-    away_win_probability = max(0.0, away_win_probability)
-    draw_probability = max(0.0, draw_probability)
     predicted_outcome = max(probabilities, key=probabilities.get)  # type: ignore
 
     return {
@@ -52,8 +54,8 @@ def predict_match(home_team_id: int, away_team_id: int, db: Session) -> dict:
         "away_team_id": away_team_id,
         "home_form": home_form,
         "away_form": away_form,
-        "home_win_probability": home_win_probability,
-        "draw_probability": draw_probability,
-        "away_win_probability": away_win_probability,
+        "home_win_probability": probabilities["home_win"],
+        "draw_probability": probabilities["draw"],
+        "away_win_probability": probabilities["away_win"],
         "predicted_outcome": predicted_outcome,
     }
