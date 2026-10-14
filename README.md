@@ -114,7 +114,6 @@ database_password=yourpassword
 database_name=football_api
 secret_key=your-secret-key
 algorithm=HS256
-access_token_expire_minutes=30
 football_api_key=your-football-data-api-key
 redis_url=redis://localhost:6379/0
 ```
