@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from app.auth import require_api_key
 from app.routers import teams
 from .. import models, schemas
 from ..database import get_db
@@ -27,7 +27,7 @@ def get_fixture(id: int, db: Session = Depends(get_db)):
     return fixture
 
 
-@router.post("/sync", status_code=202)
+@router.post("/sync", status_code=202, dependencies=[Depends(require_api_key)])
 def sync_fixtures(db: Session = Depends(get_db)):
     task = sync_fixtures_task.delay()
     return {"message": "Fixture sync started", "task_id": task.id}

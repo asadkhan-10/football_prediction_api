@@ -6,10 +6,8 @@ from app.services.prediction import calculate_probabilities, team_strength
 from app.services import prediction
 
 
-def test_create_prediction(client, sample_fixture, db):
-    # Need more fixtures for form calculation to work
-    # Add a loss for away team so prediction has data
-    response = client.post(f"/predictions/{sample_fixture.id}")
+def test_create_prediction(client, sample_fixture, db, auth_headers):
+    response = client.post(f"/predictions/{sample_fixture.id}", headers=auth_headers)
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["fixture_id"] == sample_fixture.id
@@ -19,14 +17,14 @@ def test_create_prediction(client, sample_fixture, db):
     assert 0 <= data["draw_prob"] <= 1
 
 
-def test_create_duplicate_prediction(client, sample_fixture):
-    client.post(f"/predictions/{sample_fixture.id}")
-    response = client.post(f"/predictions/{sample_fixture.id}")
+def test_create_duplicate_prediction(client, sample_fixture, auth_headers):
+    client.post(f"/predictions/{sample_fixture.id}", headers=auth_headers)
+    response = client.post(f"/predictions/{sample_fixture.id}", headers=auth_headers)
     assert response.status_code == status.HTTP_409_CONFLICT
 
 
-def test_get_prediction(client, sample_fixture):
-    client.post(f"/predictions/{sample_fixture.id}")
+def test_get_prediction(client, sample_fixture, auth_headers):
+    client.post(f"/predictions/{sample_fixture.id}", headers=auth_headers)
     response = client.get(f"/predictions/{sample_fixture.id}")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -38,8 +36,8 @@ def test_get_prediction_not_found(client):
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_get_all_predictions(client, sample_fixture):
-    client.post(f"/predictions/{sample_fixture.id}")
+def test_get_all_predictions(client, sample_fixture, auth_headers):
+    client.post(f"/predictions/{sample_fixture.id}", headers=auth_headers)
     response = client.get("/predictions/")
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
