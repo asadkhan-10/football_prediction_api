@@ -115,6 +115,7 @@ database_name=football_api
 secret_key=your-secret-key
 algorithm=HS256
 football_api_key=your-football-data-api-key
+admin_api_key=your-admin-key-for-protected-routes
 redis_url=redis://localhost:6379/0
 ```
 

@@ -20,6 +20,7 @@ services:
       - algorithm=HS256
       - redis_url=redis://redis:6379/0
       - football_api_key=${football_api_key}
+      - admin_api_key=${admin_api_key}
     restart: unless-stopped
 
   nginx:
