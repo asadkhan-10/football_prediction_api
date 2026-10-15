@@ -6,6 +6,10 @@ from app import models, schemas
 from app.services.prediction import predict_match
 from celery.result import AsyncResult
 from app.celery_app import celery_app
+from app.auth import require_api_key
+
+
+
 router = APIRouter(prefix="/predictions", tags=["Predictions"])
 
 
@@ -36,7 +40,12 @@ def build_response(prediction: models.Prediction, fixture: models.Fixture, db: S
     }
 
 
-@router.post("/{fixture_id}", status_code=status.HTTP_201_CREATED, response_model=schemas.PredictionOut)
+@router.post(
+    "/{fixture_id}",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.PredictionOut,
+    dependencies=[Depends(require_api_key)],
+)
 def create_prediction(fixture_id: int, db: Session = Depends(get_db)):
     fixture = db.query(models.Fixture).filter(models.Fixture.id == fixture_id).first()
     if not fixture:

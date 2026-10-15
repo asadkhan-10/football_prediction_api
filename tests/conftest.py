@@ -49,6 +49,11 @@ def client(db):
     yield TestClient(app)
     app.dependency_overrides.clear()
 
+@pytest.fixture()
+def auth_headers(monkeypatch):
+    monkeypatch.setattr(settings, "admin_api_key", "testkey")
+    return {"X-API-Key": "testkey"}
+
 
 @pytest.fixture()
 def sample_team(db):

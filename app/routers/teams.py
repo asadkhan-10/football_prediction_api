@@ -6,8 +6,10 @@ from .. database import get_db
 from ..external.football_client import get_premier_league_teams
 from app.services.form import get_team_form
 from app.tasks import sync_teams_task
-router = APIRouter(prefix="/teams", tags=["Teams"])
+from app.auth import require_api_key
 
+
+router = APIRouter(prefix="/teams", tags=["Teams"])
 
 @router.get("/", response_model=list[schemas.TeamOut])
 def get_teams(db: Session = Depends(get_db)):
@@ -15,7 +17,7 @@ def get_teams(db: Session = Depends(get_db)):
     return teams
 
 
-@router.post("/sync", status_code=202)
+@router.post("/sync", status_code=202, dependencies=[Depends(require_api_key)])
 def sync_teams(db: Session = Depends(get_db)):
       task = sync_teams_task.delay()
       return {"message": "Team sync started", "task_id": task.id}
