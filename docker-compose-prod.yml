@@ -73,6 +73,7 @@ services:
       - secret_key=${secret_key}
       - redis_url=redis://redis:6379/0
       - football_api_key=${football_api_key}
+      - healthcheck_url=${healthcheck_url}
     restart: unless-stopped
 
   celery_beat:
