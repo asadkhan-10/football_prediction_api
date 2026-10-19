@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     football_api_key: str
     admin_api_key: str = ""
+    healthcheck_url: str = ""
 
     class Config:
         env_file = ".env"

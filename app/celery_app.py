@@ -25,4 +25,8 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.sync_teams_task",
         "schedule": crontab(hour=3, minute=0, day_of_week=1),  # runs Monday 3am
     },
+    "worker-heartbeat": {
+        "task": "app.tasks.heartbeat_task",
+        "schedule": crontab(minute="*/5"),
+    },
 }

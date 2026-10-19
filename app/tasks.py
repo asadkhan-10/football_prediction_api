@@ -4,6 +4,12 @@ from app.database import SessionLocal
 from app.external.football_client import get_premier_league_teams, get_premier_league_fixtures
 from app import models
 from app.services.cache import delete_cached
+import logging
+import urllib.request
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 @celery_app.task
@@ -93,3 +99,16 @@ def sync_fixtures_task():
         raise e
     finally:
         db.close()
+
+
+@celery_app.task
+def heartbeat_task():
+    if not settings.healthcheck_url:
+        return "skipped"
+    try:
+        with urllib.request.urlopen(settings.healthcheck_url, timeout=10):
+            pass
+    except Exception as exc:
+        logger.warning("heartbeat ping failed: %s", exc)
+        return "failed"
+    return "ok"
